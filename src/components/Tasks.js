@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 
+import { addItem as addItemApi, getItems as getItemsApi, deleteItem as deleteItemApi, updateItem as updateItemApi } from '../api/index.js' 
+
 export const Tasks = () => {
-    const uri = 'https://localhost:5001/api/TodoItems';
 
     const [error, setError] = useState(null);
     const [isLoaded, setIsLoaded] = useState(false);
-    const [todoItems, setTodoItems] = useState([]);
+    const [todoItems, setTodoItems] = useState(["test"]);
 
     const [newTodoName, setNewTodoName] = useState('');
     const [visible, setVisible] = useState(false);
@@ -15,47 +16,43 @@ export const Tasks = () => {
 
     const [tempItem, setTempItem] = useState(initial);
 
-    const getItems = () => {
-        fetch(uri)
-        .then(res => res.json())
-        .then(
-            result => {
-                setIsLoaded(true);
-                setTodoItems(result);
-            }, error => {
-                setIsLoaded(true);
-                setError(error);
-            }
-        );
+    const getItems = async () => {
+        //setIsLoaded(false);
+        try {
+            const result = await getItemsApi();
+            setTodoItems(result);
+        } catch (e) {
+            setError(`Error getting items: ${e}`);
+        }
+        setIsLoaded(true);
     };
 
-    const addItem = () => {
+    const addItem = async () => {
         const item = {
             isComplete: false,
             name: newTodoName.trim()
         };
 
-        fetch(uri, {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(item)
-        })
-        .then(response => response.json())
-        .then(() => {
+        try {
+            await addItemApi(item);
             getItems();
+            // setTodoItems([...todoItems, {
+            //     id: item.id,
+            //     ...item
+            // }])
             setNewTodoName('');
-            }, error => setError(error)
-        );
+        } catch (e) {
+            setError(`Error adding item: ${e}`);
+        }
     };
 
-    const deleteItem = id => {
-        fetch(`${uri}/${id}`, {
-            method: 'DELETE'
-        })
-        .then(() => getItems(), error => setError(error));
+    const deleteItem = async (id) => {
+        try {
+            await deleteItemApi(id);
+            getItems();
+        } catch (e) {
+            setError(`Error deleting item: ${e}`);
+        }
     }
 
     const displayEditForm = id => {
@@ -63,26 +60,21 @@ export const Tasks = () => {
         setVisible(true);
     };
 
-    const updateItem = () => {
+    const updateItem = async () => {
         const item = {
             id: parseInt(tempItem.id, 10),
             isComplete: tempItem.isComplete,
             name: tempItem.name.trim()
         };
 
-        fetch(`${uri}/${tempItem.id}`, {
-            method: 'PUT',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(item)
-        })
-        .then(() => getItems(), error => setError(error));
+        try {
+            await updateItemApi(item);
+            getItems();
+        } catch (e) {
+            setError(`Error updating item: ${e}`);
+        }
 
         handleReset();
-
-        return false;
     };
 
     useEffect(() => {
@@ -95,7 +87,7 @@ export const Tasks = () => {
     };
 
     if (error) {
-        return <div><p>{error.message}</p></div>
+        return <div><p>{error}</p></div>
     } else if (!isLoaded) {
         return <div><p>Loading...</p></div>
     } else {
@@ -118,7 +110,9 @@ export const Tasks = () => {
                 </Wrapper>
 
                 <TodoContainer>
-                    <TodoCount>{todoItems.length} {todoItems.length === 1 ? 'to-do' : 'to-dos'}</TodoCount>
+                    <TodoCount>
+                        {todoItems.length} {todoItems.length === 1 ? 'to-do' : 'to-dos'}
+                    </TodoCount>
 
                     <TodoList>
                         <Grid>
@@ -147,6 +141,7 @@ export const Tasks = () => {
                                                 value={tempItem.name} 
                                                 onChange={(e) => setTempItem({...tempItem, name: e.target.value})}
                                                 required
+                                                data-testid="editInput"
                                             />
                                             </label>
                                             <Button 
