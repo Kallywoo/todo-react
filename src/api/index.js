@@ -1,7 +1,7 @@
 const uri = 'https://localhost:5001/api/TodoItems';
 
 export const addItem = async (item) => {
-	await fetch(uri, {
+	const result = await fetch(uri, {
 		method: 'POST',
 		headers: {
 			'Accept': 'application/json',
@@ -10,7 +10,8 @@ export const addItem = async (item) => {
 		body: JSON.stringify(item)
 	})
 	.then(response => response.json());
-	return;
+
+	return result;
 }
 
 export const getItems = async () => {

@@ -15,12 +15,22 @@ const mockUpdateItem = jest.fn();
 
 jest.mock('../../api', () => ({
     addItem: (item) => mockAddItem(item),
-    getItems: () => mockGetItems(),
+    getItems: () => mockGetItems.mockReturnValue([]),
     deleteItem: (id) => mockDeleteItem(id),
     updateItem: (item) => mockUpdateItem(item),
 }));
 
-beforeEach(() => mockGetItems.mockReturnValue([mockItem]));
+const helper = () => {
+    const input = screen.getByPlaceholderText('new to-do');
+    const submitButton = screen.getByRole('button', { name: 'ADD' });
+
+    userEvent.type(input, 'Test to-do');
+    userEvent.click(submitButton);
+};
+
+beforeEach(() => mockAddItem.mockReturnValue(mockItem));
+
+// --------------------------------------------------------------------------
 
 describe('Tasks', () => {
     it('renders correctly', async () => {
@@ -34,6 +44,7 @@ describe('Tasks', () => {
 
         expect(await screen.findByText('Add new task:')).toBeInTheDocument();
         
+        // helper()
         const input = screen.getByPlaceholderText('new to-do');
         const submitButton = screen.getByRole('button', { name: 'ADD' });
 
@@ -48,6 +59,7 @@ describe('Tasks', () => {
         });
 
         expect(input.value).toBe('');
+        expect(await screen.findByText('test-name')).toBeInTheDocument();
     })
 
     it('should delete an item when clicking delete', async () => {
@@ -57,17 +69,12 @@ describe('Tasks', () => {
 
         expect(await screen.findByText('Add new task:')).toBeInTheDocument();
 
-        const input = screen.getByPlaceholderText('new to-do');
-        const submitButton = screen.getByRole('button', { name: 'ADD' });
-
-        userEvent.type(input, 'Test to-do');
-        userEvent.click(submitButton);
+        helper();
 
         expect(await screen.findByText('test-name')).toBeInTheDocument();
 
         // end of setup
 
-        mockGetItems.mockReturnValue([]);
         const deleteButton = screen.getByRole('button', { name: 'Delete' });
 
         userEvent.click(deleteButton);
@@ -83,11 +90,7 @@ describe('Tasks', () => {
 
         expect(await screen.findByText('Add new task:')).toBeInTheDocument();
 
-        const input = screen.getByPlaceholderText('new to-do');
-        const submitButton = screen.getByRole('button', { name: 'ADD' });
-
-        userEvent.type(input, 'Test to-do');
-        userEvent.click(submitButton);
+        helper();
 
         expect(await screen.findByText('test-name')).toBeInTheDocument();
 
@@ -107,11 +110,7 @@ describe('Tasks', () => {
 
         expect(await screen.findByText('Add new task:')).toBeInTheDocument();
 
-        const input = screen.getByPlaceholderText('new to-do');
-        const submitButton = screen.getByRole('button', { name: 'ADD' });
-
-        userEvent.type(input, 'Test to-do');
-        userEvent.click(submitButton);
+        helper();
 
         expect(await screen.findByText('test-name')).toBeInTheDocument();
 
@@ -124,7 +123,6 @@ describe('Tasks', () => {
         // end of setup
 
         const updatedMockItem = {...mockItem, name: 'new-test-name'};
-        mockGetItems.mockReturnValue([updatedMockItem]);
 
         const changeInput = screen.getByTestId('editInput');
         const submitChanges = screen.getByRole('button', { name: '✓' });

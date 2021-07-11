@@ -7,7 +7,7 @@ export const Tasks = () => {
 
     const [error, setError] = useState(null);
     const [isLoaded, setIsLoaded] = useState(false);
-    const [todoItems, setTodoItems] = useState(["test"]);
+    const [todoItems, setTodoItems] = useState([]);
 
     const [newTodoName, setNewTodoName] = useState('');
     const [visible, setVisible] = useState(false);
@@ -17,7 +17,7 @@ export const Tasks = () => {
     const [tempItem, setTempItem] = useState(initial);
 
     const getItems = async () => {
-        //setIsLoaded(false);
+        setIsLoaded(false);
         try {
             const result = await getItemsApi();
             setTodoItems(result);
@@ -30,16 +30,12 @@ export const Tasks = () => {
     const addItem = async () => {
         const item = {
             isComplete: false,
-            name: newTodoName.trim()
+            name: newTodoName.trim(),
         };
 
         try {
-            await addItemApi(item);
-            getItems();
-            // setTodoItems([...todoItems, {
-            //     id: item.id,
-            //     ...item
-            // }])
+            const result = await addItemApi(item);
+            setTodoItems([...todoItems, { ...result }]);
             setNewTodoName('');
         } catch (e) {
             setError(`Error adding item: ${e}`);
@@ -49,7 +45,7 @@ export const Tasks = () => {
     const deleteItem = async (id) => {
         try {
             await deleteItemApi(id);
-            getItems();
+            setTodoItems(todoItems.filter(match => match.id !== id));
         } catch (e) {
             setError(`Error deleting item: ${e}`);
         }
@@ -69,10 +65,12 @@ export const Tasks = () => {
 
         try {
             await updateItemApi(item);
-            getItems();
+            setTodoItems(todoItems.map(obj => {
+                return obj.id === item.id ? item : obj;
+            }));
         } catch (e) {
             setError(`Error updating item: ${e}`);
-        }
+        };
 
         handleReset();
     };
